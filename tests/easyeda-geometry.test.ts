@@ -96,6 +96,22 @@ describe("EasyEDA source fidelity", () => {
     expect(validateEasyEda(doc).filter((issue) => issue.level === "error")).toEqual([]);
   });
 
+  test("pin anchors and wire paths retain image geometry when component centers are missing", () => {
+    const partial = structuredClone(geometry);
+    for (const component of partial.components) {
+      delete component.x;
+      delete component.y;
+    }
+    const doc = netlistToEasyEda(partial);
+    expect(pins(lib(doc, "R1"))).toEqual([
+      { number: "1", x: 308, y: 360, rotation: 0 },
+      { number: "2", x: 452, y: 360, rotation: 180 },
+    ]);
+    expect(doc.shape).toContain("W~452 360 620 360 620 520 1040 520 1040 632~#008800~1~0~none~gge5000~0");
+    expect(doc.shape).toContain("J~620~520~2.5~#008800~gge5001~0~");
+    expect(validateEasyEda(doc).filter((issue) => issue.level === "error")).toEqual([]);
+  });
+
   test("KiCad and EAGLE still independently verify alongside EasyEDA", () => {
     const formats = verifyExports(geometry).formats;
     expect(formats.map((format) => [format.key, format.ok])).toEqual([
