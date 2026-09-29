@@ -193,7 +193,13 @@ function sourceSymbolShape(comp: NetlistComponent, seed: number, placed: PlacedP
 }
 
 function hasUsableSourceGeometry(netlist: Netlist): boolean {
-  return netlist.components.some((comp) => validPoint(comp.x === undefined || comp.y === undefined ? undefined : { x: comp.x, y: comp.y }));
+  return netlist.components.some((comp) =>
+    validPoint(comp.x === undefined || comp.y === undefined ? undefined : { x: comp.x, y: comp.y }) ||
+    comp.pins.some((pin) => validPoint(pin.x === undefined || pin.y === undefined ? undefined : { x: pin.x, y: pin.y })),
+  ) || netlist.nets.some((net) =>
+    (net.paths ?? []).some((path) => path.length > 1 && path.every(validPoint)) ||
+    (net.junctions ?? []).some(validPoint) || validPoint(net.label),
+  );
 }
 
 function sourceShapes(netlist: Netlist): string[] {
@@ -365,4 +371,3 @@ export function netlistToEasyEda(netlist: Netlist): EasyEdaDoc {
     title: netlist.title ?? "Imported schematic",
   };
 }
-
